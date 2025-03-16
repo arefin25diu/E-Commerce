@@ -1,39 +1,40 @@
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:icons_plus/icons_plus.dart';
+import 'package:http/http.dart' as http;
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  Future<Map<String, dynamic>> fetchData() async {
+    var response = await http.get(Uri.parse('https://dummyjson.com/products'));
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body); // Return parsed JSON
+    } else {
+      throw Exception('Failed to load data');
+    }
+    
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        margin: EdgeInsets.all(40),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Image.network('https://brand.assets.adidas.com/image/upload/v1717008412/Training_SS_24_Strength_global_Launch_What_shoes_should_you_wear_to_the_gym_image_Rapidmove_fc98ca311b.jpg'),
-            Text("Nike Shoe", style: TextStyle(
-              fontSize: 20,
-              fontFamily: 'DMSans',
-              
-            ),),
-            Text("\$5500"),
-            Text('\$4500'),
-            Row(
-              children: [
-                Icon(FontAwesome.star_solid),
-                Text('4.5'),
-                Text('86 Review'),
-                Icon(FontAwesome.ellipsis_vertical_solid)
-              ],
-            )
-          ],
-        ),
+      appBar: AppBar(title: const Text('Home')),
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: fetchData(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (snapshot.hasData) {
+            final data = snapshot.data!;
+            return Center(child: Text('Title: ${data['title']}'));
+          } else {
+            return const Center(child: Text('No data available'));
+          }
+        },
       ),
     );
   }
